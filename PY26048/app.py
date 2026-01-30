@@ -1,56 +1,151 @@
 import streamlit as st
-import random
 import time
+import random
+from datetime import datetime
 
-st.set_page_config(page_title="Smart Helmet Fatigue Detection", page_icon="🪖")
-st.title("🪖 Smart Helmet Fatigue Detection System")
-st.write("Simulation of Smart Helmet Frontend alerts")
 
-# Sidebar controls
-st.sidebar.header("Simulation Settings")
-auto_mode = st.sidebar.checkbox("Automatic Fatigue Simulation", value=True)
-manual_mode = st.sidebar.checkbox("Manual Fatigue Input", value=False)
+st.set_page_config(
+    page_title="Smart Helmet with Fatigue Detection",
+    page_icon="🪖",
+    layout="centered"
+)
 
-# Session state for buzzer, LED, status
+st.title("🪖 Smart Helmet with Fatigue Detection")
+st.markdown("""
+This project simulates the **frontend alert system** of a smart helmet.
+It detects **driver fatigue** and activates **buzzer and LED alerts**.
+
+**Technology Used:**
+- Python
+- Streamlit (HTML-based UI)
+- Simulation logic (can be connected to sensors later)
+""")
+
+st.divider()
+
+st.sidebar.header("⚙ Control Panel")
+
+mode = st.sidebar.radio(
+    "Select Detection Mode",
+    ("Automatic Mode", "Manual Mode")
+)
+
+refresh_time = st.sidebar.slider(
+    "Refresh Time (seconds)",
+    min_value=1,
+    max_value=5,
+    value=2
+)
+
+st.sidebar.markdown("---")
+st.sidebar.write("👨‍💻 Project: PyExpo")
+st.sidebar.write("🧠 Topic: Smart Helmet")
+
 if "buzzer" not in st.session_state:
     st.session_state.buzzer = False
+
 if "led" not in st.session_state:
     st.session_state.led = False
+
 if "status" not in st.session_state:
     st.session_state.status = "Normal"
 
-# Check fatigue function
-def check_fatigue(fatigue_signal):
-    if fatigue_signal:
+if "log" not in st.session_state:
+    st.session_state.log = []
+
+
+def fatigue_check(signal):
+    current_time = datetime.now().strftime("%H:%M:%S")
+
+    if signal == 1:
         st.session_state.buzzer = True
         st.session_state.led = True
-        st.session_state.status = "⚠ Fatigue Detected!"
+        st.session_state.status = "⚠ FATIGUE DETECTED"
+
+        st.session_state.log.append(
+            f"[{current_time}] Fatigue detected – Alert ON"
+        )
     else:
         st.session_state.buzzer = False
         st.session_state.led = False
-        st.session_state.status = "✅ Normal"
+        st.session_state.status = "✅ NORMAL"
 
-# Simulation
-st.subheader("Helmet Status")
+        st.session_state.log.append(
+            f"[{current_time}] Normal condition"
+        )
 
-if auto_mode:
+
+st.subheader("🚦 Helmet Status")
+
+status_color = "red" if st.session_state.status.startswith("⚠") else "green"
+
+st.markdown(
+    f"<h3 style='color:{status_color};'>{st.session_state.status}</h3>",
+    unsafe_allow_html=True
+)
+
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("### 🔊 Buzzer")
+    if st.session_state.buzzer:
+        st.success("BUZZER ON")
+    else:
+        st.info("Buzzer OFF")
+
+with col2:
+    st.markdown("### 💡 LED")
+    if st.session_state.led:
+        st.success("LED ON")
+    else:
+        st.info("LED OFF")
+
+st.divider()
+
+
+if mode == "Automatic Mode":
+    st.subheader("🤖 Automatic Fatigue Detection")
+
     fatigue_signal = random.choice([0, 1])
-    check_fatigue(fatigue_signal)
-    st.write("Automatic Mode Active")
-else:
-    st.write("Automatic Mode Off")
+    fatigue_check(fatigue_signal)
 
-if manual_mode:
-    user_input = st.radio("Manual Fatigue Input:", ("Normal", "Fatigue"))
-    fatigue_signal = 1 if user_input == "Fatigue" else 0
-    check_fatigue(fatigue_signal)
-
-# Display status
-st.markdown(f"### Status: {st.session_state.status}")
-st.markdown(f"Buzzer: {'ON 🔊' if st.session_state.buzzer else 'OFF'}")
-st.markdown(f"LED: {'ON 💡' if st.session_state.led else 'OFF'}")
-
-# Auto-refresh for auto mode
-if auto_mode:
-    time.sleep(2)
+    st.write("System is automatically checking fatigue...")
+    time.sleep(refresh_time)
     st.experimental_rerun()
+
+else:
+    st.subheader("🧍 Manual Fatigue Control")
+
+    user_input = st.radio(
+        "Select Helmet Condition",
+        ("Normal", "Fatigue Detected")
+    )
+
+    if st.button("Update Status"):
+        signal = 1 if user_input == "Fatigue Detected" else 0
+        fatigue_check(signal)
+
+st.divider()
+st.subheader("📜 Activity Log")
+
+if st.session_state.log:
+    for entry in st.session_state.log[-10:]:
+        st.write(entry)
+else:
+    st.write("No activity recorded yet.")
+
+
+st.divider()
+st.markdown("""
+### 📌 Project Explanation (For Judges)
+- This is the **frontend module** of the smart helmet
+- Fatigue signal comes from backend / sensors
+- When fatigue is detected:
+  - Buzzer activates
+  - LED turns ON
+- Can be integrated with:
+  - Arduino
+  - Eye blink sensor
+  - Camera-based AI
+""")
